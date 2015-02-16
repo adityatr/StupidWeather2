@@ -1,8 +1,11 @@
 package huskywhale.stupidweather2;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -12,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -47,7 +51,7 @@ private ArrayAdapter<String> mForecastAdapter;
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        String [] week_data = {"Hello ADitya, 94C","Hel442lo sss, 9422C"};
+        String [] week_data = {};
  //       mForecastAdapter = new ArrayAdapter<String>(getActivity(),R.layout.list_item_forecast,R.id.list_item_forecast_textView,weekforecast);
 
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(week_data));
@@ -56,7 +60,15 @@ private ArrayAdapter<String> mForecastAdapter;
 
         ListView list_item = (ListView) rootView.findViewById(R.id.listview_forecast);
         list_item.setAdapter(mForecastAdapter);
-
+        list_item.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+               String forecast = mForecastAdapter.getItem(position);
+                Intent detailed_forecast = new Intent(getActivity(),DetailActivity.class)
+                .putExtra(Intent.EXTRA_TEXT,forecast);
+                startActivity(detailed_forecast);
+            }
+        });
 
 
 
@@ -171,6 +183,13 @@ private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
         }
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -187,8 +206,9 @@ private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
-           FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("94043");
+
+            updateWeather();
+
             return true;
         }
 
@@ -199,6 +219,33 @@ private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
     /* The date/time conversion code is going to be moved outside the asynctask later,
  * so for convenience we're breaking it out into its own method now.
  */
+    private  void updateWeather()
+    {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_default));
+
+        weatherTask.execute(location);
+    }
+
+    private String formatHighLows(double high, double low, String unitType) {
+
+                   if (unitType.equals(getString(R.string.pref_units_imperial))) {
+                       high = (high * 1.8) + 32;
+                       low = (low * 1.8) + 32;
+                   } else if (!unitType.equals(getString(R.string.pref_units_metric))) {
+                       Log.d(getTag(), "Unit type not found: " + unitType);
+                   }
+
+                   long roundedHigh = Math.round(high);
+                   long roundedLow = Math.round(low); String highLowStr = roundedHigh + "/" + roundedLow;
+                   return highLowStr;
+    }
+
+
+
+
+
     private String getReadableDateString(long time){
         // Because the API returns a unix timestamp (measured in seconds),
         // it must be converted to milliseconds in order to be converted to valid date.
@@ -257,6 +304,11 @@ private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
         dayTime = new Time();
 
         String[] resultStrs = new String[numDays];
+        SharedPreferences sharedPrefs =
+         PreferenceManager.getDefaultSharedPreferences(getActivity());
+         String unitType = sharedPrefs.getString(
+         getString(R.string.pref_units_key),
+          getString(R.string.pref_units_metric));
         for(int i = 0; i < weatherArray.length(); i++) {
             // For now, using the format "Day, description, hi/low"
             String day;
@@ -284,7 +336,7 @@ private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
             double high = temperatureObject.getDouble(OWM_MAX);
             double low = temperatureObject.getDouble(OWM_MIN);
 
-            highAndLow = formatHighLows(high, low);
+            highAndLow = formatHighLows(high, low,unitType);
             resultStrs[i] = day + " - " + description + " - " + highAndLow;
         }
 
