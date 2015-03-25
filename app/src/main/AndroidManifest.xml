@@ -34,6 +34,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="huskywhale.stupidweather2.MainActivity" />
         </activity>
+        <provider android:authorities="huskywhale.stupidweather2"
+
+        android:name=".data.WeatherProvider"></provider>
+
+
     </application>
 
 </manifest>
