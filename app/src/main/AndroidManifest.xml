@@ -36,7 +36,8 @@
         </activity>
         <provider android:authorities="huskywhale.stupidweather2"
 
-        android:name=".data.WeatherProvider"></provider>
+        android:name=".data.WeatherProvider"
+            ></provider>
 
 
     </application>
