@@ -180,4 +180,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mForecastAdapter.swapCursor(null);
     }
+    /**
+     * Helper method to provide the icon resource id according to the weather condition id returned
+     * by the OpenWeatherMap call.
+     * @param weatherId from OpenWeatherMap API response
+     * @return resource id for the corresponding icon. -1 if no relation is found.
+     */
+
 }
